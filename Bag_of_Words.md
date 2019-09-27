@@ -61,10 +61,10 @@ coffee_corpus[[15]]$content
 
 ``` r
 # Now use content to review plain text of the 10th tweet
-content(coffee_corpus[[10]])
+content(coffee_corpus[[15]])
 ```
 
-    ## [1] "Happy Friday!! Wherever the weekend takes you, I hope it's a wonderful one!\n\nI'm working in a new manuscript, so tons of coffee is in my near future.\n\nWhat're up to yourself?\n\n#amwriting #coffee #WritingCommunity #thethrillofablankpage #fueledbyfaithandcaffeine https://t.co/1CtuLNl91w"
+    ## [1] "If you don't drink #coffee, you are missing out on the Elixir of the Gods...\n\n#fitness #fitfam #health\n\nhttps://t.co/1GPhqlsUG0"
 
 Some useful function
 ====================
@@ -72,7 +72,9 @@ Some useful function
 ``` r
 # Create the object: text
 text <- "<b>She</b> woke up at       6 A.M. It\'s so early!  She was only 10% awake and began drinking coffee in front of her computer."
+```
 
+``` r
 # Make lowercase
 tolower(text) %>% print()
 ```
@@ -241,13 +243,6 @@ coffee_text[100]
 # Create the document-term matrix from the corpus
 coffee_dtm <- DocumentTermMatrix(clean_corp) %>% as.matrix
 
-# Print the dimensions of coffee_m
-dim(coffee_dtm)
-```
-
-    ## [1]  9991 44000
-
-``` r
 # Review a portion of the matrix to get some Starbucks
 coffee_dtm[1550:1560, c("star", "starbucks")]
 ```
@@ -270,13 +265,6 @@ coffee_dtm[1550:1560, c("star", "starbucks")]
 # Create a term-document matrix from the corpus
 coffee_tdm <- TermDocumentMatrix(clean_corp) %>% as.matrix()
 
-# Print the dimensions of the matrix
-dim(coffee_tdm)
-```
-
-    ## [1] 44000  9991
-
-``` r
 # Review a portion of the matrix
 coffee_tdm[c("star", "starbucks"), 1550:1560]
 ```
