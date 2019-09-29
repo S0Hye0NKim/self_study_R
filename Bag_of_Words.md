@@ -4,6 +4,8 @@ library(rtweet)
 library(tidytext)
 library(tm)
 library(qdap)
+library(ggplot2)
+library(rebus)
 ```
 
 Data
@@ -216,7 +218,7 @@ Cleaning Corpus
 clean_corpus <- function(corpus){
   corpus <- tm_map(corpus, removePunctuation)
   corpus <- tm_map(corpus, content_transformer(tolower))
-  corpus <- tm_map(corpus, removeWords, words = c(stopwords("en"), "coffee", "mug"))
+  corpus <- tm_map(corpus, removeWords, words = c(stopwords("en"), "coffee", "httpstco" %R% one_or_more(WRD)))
   corpus <- tm_map(corpus, stripWhitespace)
   return(corpus)
 }
@@ -228,7 +230,7 @@ clean_corp <- clean_corpus(coffee_corpus)
 content(clean_corp[[100]])
 ```
 
-    ## [1] "black egg mushroom muffin currentaffairs little sign advising people mental age lunch eatlessmeat costacoffee simplythebest theweek httpstcohnzduxriie"
+    ## [1] "black egg mushroom muffin currentaffairs little sign advising people mental age lunch eatlessmeat costacoffee simplythebest theweek "
 
 ``` r
 # Print out the same tweet in original form
@@ -237,7 +239,8 @@ coffee_text[100]
 
     ## [1] "Black #coffee, egg and mushroom muffin, #currentaffairs and a little sign advising people of my mental age.\n\n#lunch #eatlessmeat #CostaCoffee #SimplytheBest #TheWeek https://t.co/hnzDUxRiIe"
 
-\#Document-Term Matrix and Term-Document Matrix
+Document-Term Matrix and Term-Document Matrix
+=============================================
 
 ``` r
 # Create the document-term matrix from the corpus
@@ -273,3 +276,59 @@ coffee_tdm[c("star", "starbucks"), 1550:1560]
     ## Terms       1550 1551 1552 1553 1554 1555 1556 1557 1558 1559 1560
     ##   star         0    0    0    0    0    0    0    0    0    1    0
     ##   starbucks    1    2    0    0    1    0    1    0    1    1    1
+
+Top 10 Words
+============
+
+``` r
+coffee_m <- as.matrix(coffee_tdm)
+
+# Calculate the row sums of coffee_m
+term_frequency <- rowSums(coffee_m)
+
+# Sort term_frequency in decreasing order
+term_frequency <- sort(term_frequency, decreasing = TRUE)
+
+# View the top 10 most common words
+term_frequency[1:10]
+
+# Plot a barchart of the 10 most common words
+barplot(term_frequency[1:10], col = "tan", las = 2)
+```
+
+![barplot1](https://user-images.githubusercontent.com/44796982/65834122-c5441280-e312-11e9-8f9b-5f2955bcad68.png)
+
+``` r
+clean_text <- clean_corp %>% lapply(FUN = content) %>%
+  unlist()
+
+# Create frequency
+frequency <- freq_terms(
+  clean_text, 
+  top = 10,    # limit to the top 10 terms
+  at.least = 3,  # at least 3 letters per term
+  stopwords = "Top200Words" 
+)
+
+# Make a frequency barchart
+plot(frequency)
+```
+
+![plot2](https://user-images.githubusercontent.com/44796982/65834124-d2f99800-e312-11e9-8b10-5450cf348e38.png)
+
+Word Cloud
+==========
+
+``` r
+# Load wordcloud package
+library(wordcloud)
+
+# Vector of terms
+terms_vec <- names(term_frequency)
+
+# Create a wordcloud for the values in word_freqs
+set.seed(10)
+wordcloud(terms_vec, term_frequency, max.words = 50, colors = c("grey80", "darkgoldenrod1", "tomato"))
+```
+
+![plot3](https://user-images.githubusercontent.com/44796982/65834127-dd1b9680-e312-11e9-81fd-55b88181bd0a.png)
