@@ -21,6 +21,8 @@ saveRDS(coffee_tweets, "coffee_tweets.rds")
 ``` r
 coffee_tweets <- readRDS("coffee_tweets.rds")
 coffee_text <- coffee_tweets$text
+wine_tweets <- readRDS("wine_tweets.rds")
+wine_text <- wine_tweets$text
 ```
 
 Make Corpus
@@ -332,3 +334,104 @@ wordcloud(terms_vec, term_frequency, max.words = 50, colors = c("grey80", "darkg
 ```
 
 ![plot3](https://user-images.githubusercontent.com/44796982/65834127-dd1b9680-e312-11e9-81fd-55b88181bd0a.png)
+
+Commonality / Comparison cloud
+==============================
+
+``` r
+coffee_text_clean <- coffee_text %>%
+  removePunctuation() %>%
+  tolower() %>%
+  removeWords(words = c(stopwords("en"), "coffee", "wine", "httpstco" %R% one_or_more(WRD), "amp")) %>%
+  stripWhitespace()
+
+wine_text_clean <- wine_text %>%
+  removePunctuation() %>%
+  tolower() %>%
+  removeWords(words = c(stopwords("en"), "coffee", "wine", "httpstco" %R% one_or_more(WRD), "amp")) %>%
+  stripWhitespace()
+```
+
+``` r
+# Create all_coffee
+all_coffee <- paste(coffee_text_clean, collapse = " ")
+
+# Create all_chardonnay
+all_wine <- paste(wine_text_clean, collapse = " ")
+
+# Create all_tweets
+all_tweets <- c(all_coffee, all_wine)
+
+# Convert to a vector source
+all_tweets <- VectorSource(all_tweets)
+
+# Create all_corpus
+all_corpus <- VCorpus(all_tweets)
+```
+
+``` r
+# Create all_tdm
+all_tdm <- TermDocumentMatrix(all_corpus)
+
+# Create all_m
+all_m <- as.matrix(all_tdm)
+
+# Print a commonality cloud
+set.seed(1)
+wordcloud::commonality.cloud(all_m, max.words = 50, colors = "steelblue1")
+```
+
+![commonality\_plot](https://user-images.githubusercontent.com/44796982/65844753-64e4bd80-e372-11e9-8e80-0f0e3460f140.png)
+
+``` r
+# Create all_m
+all_m <- all_m %>% `colnames<-`(value = c("coffee", "wine"))
+
+# Create comparison cloud
+set.seed(10)
+wordcloud::comparison.cloud(all_m, colors = c("orange", "blue"), max.words = 50)
+```
+
+![comparison\_plot](https://user-images.githubusercontent.com/44796982/65844764-6f9f5280-e372-11e9-8251-db4d70aeef98.png)
+
+Pyramid plot
+============
+
+``` r
+top25_df <- all_m %>%
+  as_tibble(rownames = "word") %>% 
+  filter_all(all_vars(. > 0)) %>% 
+  filter(coffee > 225, wine > 225) %>%
+  mutate(coffee_perc = (coffee / length(coffee_text)) * 100, 
+         wine_perc = (wine / length(wine_text)) * 100)
+
+
+plotrix::pyramid.plot(
+  top25_df$wine_perc, 
+  top25_df$coffee_perc, 
+  # Words
+  labels = top25_df$word, 
+  top.labels = c("wine", "Words", "Coffee"), 
+  main = "Words in Common", 
+  unit = "%",
+  gap = 1.5,
+  space = 0.2,
+  labelcex = 0.8
+)
+```
+
+![pyramid\_plot](https://user-images.githubusercontent.com/44796982/65844780-7b8b1480-e372-11e9-9236-80815de1ecdd.png)
+
+Word Networks
+=============
+
+``` r
+qdap::word_associate(coffee_text_clean[1:400], match.string = "starbucks", 
+               stopwords = c(Top200Words, "coffee", "amp"), 
+               network.plot = TRUE, cloud.colors = c("gray85", "darkred"))
+
+# Add title
+title(main = "Starbucks Coffee Tweet Associations")
+```
+
+![word\_network](https://user-images.githubusercontent.com/44796982/65844785-83e34f80-e372-11e9-994c-959dd1a7783f.png)
