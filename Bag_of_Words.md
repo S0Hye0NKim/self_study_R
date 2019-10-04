@@ -1,3 +1,8 @@
+Bag of Words
+================
+Sohyeon Kim
+2019 9 27
+
 ``` r
 library(tidyverse)
 library(rtweet)
@@ -6,10 +11,10 @@ library(tm)
 library(qdap)
 library(ggplot2)
 library(rebus)
+library(ggthemes)
 ```
 
-Data
-====
+# Data
 
 ``` r
 coffee_tweets <- search_tweets(q = "#coffee", n = 10000,
@@ -25,8 +30,7 @@ wine_tweets <- readRDS("wine_tweets.rds")
 wine_text <- wine_tweets$text
 ```
 
-Make Corpus
-===========
+# Make Corpus
 
 ``` r
 coffee_source <- VectorSource(coffee_text)
@@ -70,8 +74,7 @@ content(coffee_corpus[[15]])
 
     ## [1] "If you don't drink #coffee, you are missing out on the Elixir of the Gods...\n\n#fitness #fitfam #health\n\nhttps://t.co/1GPhqlsUG0"
 
-Some useful function
-====================
+# Some useful function
 
 ``` r
 # Create the object: text
@@ -212,8 +215,7 @@ complete_doc
     ##      complic          too      complic 
     ## "complicate"        "too" "complicate"
 
-Cleaning Corpus
-===============
+# Cleaning Corpus
 
 ``` r
 # Alter the function code to match the instructions
@@ -241,8 +243,7 @@ coffee_text[100]
 
     ## [1] "Black #coffee, egg and mushroom muffin, #currentaffairs and a little sign advising people of my mental age.\n\n#lunch #eatlessmeat #CostaCoffee #SimplytheBest #TheWeek https://t.co/hnzDUxRiIe"
 
-Document-Term Matrix and Term-Document Matrix
-=============================================
+# Document-Term Matrix and Term-Document Matrix
 
 ``` r
 # Create the document-term matrix from the corpus
@@ -268,10 +269,11 @@ coffee_dtm[1550:1560, c("star", "starbucks")]
 
 ``` r
 # Create a term-document matrix from the corpus
-coffee_tdm <- TermDocumentMatrix(clean_corp) %>% as.matrix()
+coffee_tdm <- TermDocumentMatrix(clean_corp) 
+coffee_m <- coffee_tdm %>% as.matrix
 
 # Review a portion of the matrix
-coffee_tdm[c("star", "starbucks"), 1550:1560]
+coffee_m[c("star", "starbucks"), 1550:1560]
 ```
 
     ##            Docs
@@ -279,12 +281,9 @@ coffee_tdm[c("star", "starbucks"), 1550:1560]
     ##   star         0    0    0    0    0    0    0    0    0    1    0
     ##   starbucks    1    2    0    0    1    0    1    0    1    1    1
 
-Top 10 Words
-============
+# Top 10 Words
 
 ``` r
-coffee_m <- as.matrix(coffee_tdm)
-
 # Calculate the row sums of coffee_m
 term_frequency <- rowSums(coffee_m)
 
@@ -318,8 +317,7 @@ plot(frequency)
 
 ![plot2](https://user-images.githubusercontent.com/44796982/65834124-d2f99800-e312-11e9-8b10-5450cf348e38.png)
 
-Word Cloud
-==========
+# Word Cloud
 
 ``` r
 # Load wordcloud package
@@ -335,8 +333,7 @@ wordcloud(terms_vec, term_frequency, max.words = 50, colors = c("grey80", "darkg
 
 ![plot3](https://user-images.githubusercontent.com/44796982/65834127-dd1b9680-e312-11e9-81fd-55b88181bd0a.png)
 
-Commonality / Comparison cloud
-==============================
+# Commonality / Comparison cloud
 
 ``` r
 coffee_text_clean <- coffee_text %>%
@@ -394,8 +391,7 @@ wordcloud::comparison.cloud(all_m, colors = c("orange", "blue"), max.words = 50)
 
 ![comparison\_plot](https://user-images.githubusercontent.com/44796982/65844764-6f9f5280-e372-11e9-8251-db4d70aeef98.png)
 
-Pyramid plot
-============
+# Pyramid plot
 
 ``` r
 top25_df <- all_m %>%
@@ -422,8 +418,7 @@ plotrix::pyramid.plot(
 
 ![pyramid\_plot](https://user-images.githubusercontent.com/44796982/65844780-7b8b1480-e372-11e9-9236-80815de1ecdd.png)
 
-Word Networks
-=============
+# Word Networks
 
 ``` r
 qdap::word_associate(coffee_text_clean[1:400], match.string = "starbucks", 
@@ -435,3 +430,89 @@ title(main = "Starbucks Coffee Tweet Associations")
 ```
 
 ![word\_network](https://user-images.githubusercontent.com/44796982/65844785-83e34f80-e372-11e9-994c-959dd1a7783f.png)
+
+# Dendrogram
+
+``` r
+# Print the dimensions of tweets_tdm
+dim(coffee_tdm)
+```
+
+    ## [1] 33761  9991
+
+``` r
+# Create tdm1
+tdm1 <- removeSparseTerms(coffee_tdm, sparse = 0.95)
+
+# Create tdm2
+tdm2 <- removeSparseTerms(coffee_tdm, sparse = 0.975)
+
+# Print tdm1
+print(tdm1)
+```
+
+    ## <<TermDocumentMatrix (terms: 11, documents: 9991)>>
+    ## Non-/sparse entries: 7550/102351
+    ## Sparsity           : 93%
+    ## Maximal term length: 11
+    ## Weighting          : term frequency (tf)
+
+``` r
+# Print tdm2
+print(tdm2)
+```
+
+    ## <<TermDocumentMatrix (terms: 46, documents: 9991)>>
+    ## Non-/sparse entries: 19572/440014
+    ## Sparsity           : 96%
+    ## Maximal term length: 12
+    ## Weighting          : term frequency (tf)
+
+``` r
+# Create tweets_tdm2
+tweets_tdm2 <- removeSparseTerms(coffee_tdm, sparse = 0.975)
+
+# Create tdm_m
+tdm_m <- as.matrix(tweets_tdm2)
+
+# Create tweets_dist
+tweets_dist <- dist(tdm_m)
+
+# Create hc
+hc <- hclust(tweets_dist)  # Hierarchical Cluster
+
+# Plot the dendrogram
+plot(hc)
+```
+
+![plot1](https://user-images.githubusercontent.com/44796982/66177177-662c2800-e69b-11e9-9ccd-9f4227260b85.png)
+
+``` r
+# Create hcd
+hcd <- as.dendrogram(hc)
+
+# Change the branch color to red for "marvin" and "gaye"
+hcd_colored <- dendextend::branches_attr_by_labels(hcd, c("coffeeaddict", "coffeeshop"), "red")
+
+# Plot hcd
+plot(hcd_colored, main = "Better Dendrogram")
+```
+
+![plot2](https://user-images.githubusercontent.com/44796982/66177183-70e6bd00-e69b-11e9-91d4-952427f68240.png)
+
+# Association Plot
+
+``` r
+# Create associations
+associations <- findAssocs(coffee_tdm, "espresso", 0.2)
+
+# Create associations_df
+associations_df <- list_vect2df(associations, col2 = "word", col3 = "score")
+
+# Plot the associations_df values
+ggplot(associations_df, aes(score, word)) + 
+  geom_point(size = 3) + 
+  theme_gdocs()
+```
+
+![plot3](https://user-images.githubusercontent.com/44796982/66177190-76dc9e00-e69b-11e9-80d8-10f22977a426.png)
